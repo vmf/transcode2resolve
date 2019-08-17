@@ -1,0 +1,72 @@
+#!/usr/bin/python
+
+# Transcode a video file to a format that DaVinci Resolve for Linux can easily work with.
+# This converts the source footage into a mov container with mjpeg encoded video 
+# and PCM encoded audio.
+
+import os
+import sys
+from subprocess import call
+
+debug = False
+fn = ''	# The video to be encoded
+
+# If the script is called with no options or -h, print usage
+if len(sys.argv) == 1 or sys.argv[1] == '-h':
+    print usage()
+    exit()
+
+# Does file exist?
+if os.path.exists(sys.argv[1]):
+	fn = os.path.abspath(sys.argv[1])
+else:
+	print "\nERROR: Could not access \"" + sys.argv[1] + "\"  Exiting ...\n"
+	exit()
+
+# Set working directory to where file is located
+os.chdir(os.path.dirname(fn))
+
+if debug: 
+	print "sys.argv[1]: " + sys.argv[1] + "\n" 
+	print "os.path.dirname: " + os.path.dirname(fn)
+
+
+# Does output directory exist? Create it.
+if not os.path.exists("t2r"):
+	try:
+	    os.mkdir("t2r") 
+	except OSError:
+		print "Could not create output directory. Exiting ..."
+		exit()
+
+# Strip file extension
+basefilename = os.path.splitext(os.path.basename(fn))[0] + ".mov"
+outputfile = os.path.join(os.getcwd(), "t2r", basefilename)
+
+if debug:
+	print "basefilename: " + basefilename
+	print fn 
+	print outputfile
+
+# The ffmpeg command
+part1 = "ffmpeg -i '"
+part2 = "' -vcodec mjpeg -q:v 2 -acodec pcm_s16be -q:a 0 -f mov '"
+part3 = "'"
+
+command = part1 + fn + part2 + outputfile + part3
+
+# Execute!!!
+if debug:
+	print(command)
+else:
+	call(command, shell=True)
+
+
+
+
+def usage():
+
+    print "t2r <video file>"
+    print "Transcodes a video file into a format that DaVinci Resolve for" 
+    print "Linux can easily use. Requires ffmpeg to be installed in user's path."
+
